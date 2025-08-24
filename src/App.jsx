@@ -38,7 +38,14 @@ export default function App() {
               <Route path="/pets/:id" element={<PetDetails />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/applications" element={<Applications />} />
-              <Route path="/messages" element={<Messages />} />
+              <Route
+                path="/messages"
+                element={
+                  <RequireAuth>
+                    <Messages />
+                  </RequireAuth>
+                }
+              />
               <Route path="/dashboard" element={<DashboardAdopter />} />
               <Route path="/dashboard/shelter" element={<DashboardShelter />} />
               <Route path="*" element={<NotFound />} />              {/* fallback */}

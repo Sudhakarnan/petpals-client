@@ -1,14 +1,17 @@
 import axios from 'axios'
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL // must end with /api
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true,
+  baseURL: API_BASE_URL,
+  withCredentials: false, // you use Authorization header, not cookies
 })
 
-api.interceptors.request.use((config) => {
+// Always attach Bearer token if present
+api.interceptors.request.use((cfg) => {
   const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
+  if (token) cfg.headers.Authorization = `Bearer ${token}`
+  return cfg
 })
 // Auto-handle 401s
 api.interceptors.response.use(

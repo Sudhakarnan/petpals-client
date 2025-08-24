@@ -69,6 +69,7 @@ function MessageInput({ onSend, disabled }) {
 }
 
 export default function Messages() {
+  const { isAuthenticated, loading: authLoading } = useAuth()
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -94,41 +95,11 @@ export default function Messages() {
   }
 
   useEffect(() => {
-    (async () => {
-      setLoading(true)
-      const items = await loadThreads()
-      const qThread = sp.get('thread')
-      const to = sp.get('to')
-      const petId = sp.get('pet')
-
-      try {
-        if (qThread) {
-          const found = items.find(t => t._id === qThread)
-          if (found) setActive(found)
-          else {
-            const { data } = await messagesApi.get(qThread)
-            const full = data || null
-            if (full) {
-              setActive(full)
-              setThreads(prev => prev.some(t => t._id === full._id) ? prev : [full, ...prev])
-            }
-          }
-        } else if (to) {
-          const { data } = await messagesApi.start({ toUserId: to, petId })
-          const items2 = await loadThreads()
-          const found2 = items2.find(t => t._id === data?._id)
-          setActive(found2 || data || null)
-        } else {
-          setActive(items[0] || null)
-        }
-      } catch (e) {
-        console.error('boot resolve failed', e?.response?.data || e.message)
-      } finally {
-        setLoading(false)
-      }
-    })()
+    if (authLoading || !isAuthenticated) return
+    (async () => { /* load threads */ })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [authLoading, isAuthenticated])
+
 
   const send = async (text) => {
     if (!active) return
@@ -171,58 +142,57 @@ export default function Messages() {
 
   return (
     <div className="grid md:grid-cols-3 gap-6 mx-auto max-w-6xl px-4 py-10 bg-gradient-to-br from-sky-50 via-cyan-50 to-blue-50 rounded-2xl border border-cyan-100/70 shadow-2xl backdrop-blur">
-  <aside className="rounded-2xl border border-cyan-200/70 bg-white/80 backdrop-blur-md p-3 h-[520px] overflow-y-auto shadow-md">
-    <h2 className="font-semibold mb-3 text-slate-900">Conversations</h2>
-    {error && (
-      <div className="mb-2 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2">
-        {error}
-      </div>
-    )}
-    {sortedThreads.map(t => (
-      <button
-        key={t._id}
-        className={`block w-full text-left px-3 py-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
-          activeId === t._id
-            ? 'bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-sm'
-            : 'hover:bg-sky-50 text-slate-700'
-        }`}
-        onClick={() => setActive(t)}
-      >
-        <div className="font-medium">{t.otherParty?.name || 'Chat'}</div>
-        {/* Tiny pet label */}
-        <div className="text-[11px] opacity-70">
-          {t.pet?.name ? `For ${t.pet.name}` : 'General chat'}
-        </div>
-        <div className="text-[10px] opacity-70 truncate">
-          {t.lastMessage?.text || 'No messages yet'}
-        </div>
-      </button>
-    ))}
-    {!loading && sortedThreads.length === 0 && (
-      <div className="text-sm text-slate-500">No conversations yet.</div>
-    )}
-  </aside>
+      <aside className="rounded-2xl border border-cyan-200/70 bg-white/80 backdrop-blur-md p-3 h-[520px] overflow-y-auto shadow-md">
+        <h2 className="font-semibold mb-3 text-slate-900">Conversations</h2>
+        {error && (
+          <div className="mb-2 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2">
+            {error}
+          </div>
+        )}
+        {sortedThreads.map(t => (
+          <button
+            key={t._id}
+            className={`block w-full text-left px-3 py-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${activeId === t._id
+                ? 'bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-sm'
+                : 'hover:bg-sky-50 text-slate-700'
+              }`}
+            onClick={() => setActive(t)}
+          >
+            <div className="font-medium">{t.otherParty?.name || 'Chat'}</div>
+            {/* Tiny pet label */}
+            <div className="text-[11px] opacity-70">
+              {t.pet?.name ? `For ${t.pet.name}` : 'General chat'}
+            </div>
+            <div className="text-[10px] opacity-70 truncate">
+              {t.lastMessage?.text || 'No messages yet'}
+            </div>
+          </button>
+        ))}
+        {!loading && sortedThreads.length === 0 && (
+          <div className="text-sm text-slate-500">No conversations yet.</div>
+        )}
+      </aside>
 
-  <section className="md:col-span-2 space-y-3">
-    {active ? (
-      <>
-        {/* Chat header with tiny pet text */}
-        <div className="px-1 text-sm text-slate-600">
-          {active.otherParty?.name}{' '}
-          <span className="opacity-80">
-            {active.pet?.name ? `• For ${active.pet.name}` : '• General chat'}
-          </span>
-        </div>
-        <MessageThread thread={active} onDeleteForMe={deleteForMe} />
-        <MessageInput onSend={send} disabled={loading} />
-      </>
-    ) : (
-      <div className="rounded-2xl border border-cyan-200/70 bg-white/80 backdrop-blur-md p-6 shadow-md">
-        Select a conversation
-      </div>
-    )}
-  </section>
-</div>
+      <section className="md:col-span-2 space-y-3">
+        {active ? (
+          <>
+            {/* Chat header with tiny pet text */}
+            <div className="px-1 text-sm text-slate-600">
+              {active.otherParty?.name}{' '}
+              <span className="opacity-80">
+                {active.pet?.name ? `• For ${active.pet.name}` : '• General chat'}
+              </span>
+            </div>
+            <MessageThread thread={active} onDeleteForMe={deleteForMe} />
+            <MessageInput onSend={send} disabled={loading} />
+          </>
+        ) : (
+          <div className="rounded-2xl border border-cyan-200/70 bg-white/80 backdrop-blur-md p-6 shadow-md">
+            Select a conversation
+          </div>
+        )}
+      </section>
+    </div>
 
   )
 }

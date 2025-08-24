@@ -45,6 +45,7 @@ export function AuthProvider({ children }) {
     })
     localStorage.setItem('token', data.token)
     setToken(data.token)
+    api.defaults.headers.common.Authorization = `Bearer ${data.token}`
     setUser(data.user)
     return data.user
   }
