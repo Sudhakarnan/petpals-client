@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@config "../tailwind.config.js"; /* keep if you’re using your JS config (colors, etc.) */
+
+/* global resets are fine in plain CSS */
+html, body, #root { height: 100%; }
+body { @apply bg-gray-50 text-gray-900; }
+
+/* make reusable classes into utilities so @apply can use them elsewhere */
+@utility btn {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium
+         transition active:scale-[.98]
+         shadow-[0_10px_30px_-12px_rgba(0,0,0,0.15)];
+}
+
+@utility btn-primary {
+  @apply btn bg-brand text-white hover:bg-brand-600;
+}
+
+@utility btn-outline {
+  @apply btn border border-gray-300 bg-white hover:bg-gray-50;
+}
+
+@utility card {
+  @apply bg-white rounded-2xl
+         shadow-[0_10px_30px_-12px_rgba(0,0,0,0.15)];
+}
+
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs;
+}
